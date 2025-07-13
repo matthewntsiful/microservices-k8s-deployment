@@ -13,6 +13,8 @@
 
 A production-ready Kubernetes deployment of a microservices-based e-commerce application, featuring 12 interconnected services with proper security, monitoring, and scalability configurations.
 
+![Frontend](screenshots/frontend.png)
+
 ## 🏗️ Architecture Overview
 
 This project demonstrates a complete microservices architecture deployed on Kubernetes, showcasing:
@@ -106,6 +108,8 @@ kubectl get svc -n microservices
 kubectl get ingress -n microservices
 ```
 
+![Cart](screenshots/cart.png)
+
 ### 4. Access the Application
 ```bash
 # Get Ingress IP
@@ -114,6 +118,8 @@ kubectl get ingress -n microservices
 # Access via browser
 http://<INGRESS_IP>/
 ```
+
+
 
 ## 🔧 Configuration Details
 
@@ -136,6 +142,8 @@ Each service configured with:
 - **Memory Limits**: 128-512Mi
 
 ## 🔍 Monitoring & Debugging
+
+![Order Confirmation](screenshots/order-confirmation.png)
 
 ### Health Checks
 ```bash
@@ -204,6 +212,8 @@ Use the included load generator:
 ```bash
 kubectl logs -f deployment/loadgenerator -n microservices
 ```
+
+
 
 ## 🤝 Contributing
 
