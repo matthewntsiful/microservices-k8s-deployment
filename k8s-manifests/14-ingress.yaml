@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: microservices-ingress
+  namespace: microservices
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -22,6 +23,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: microservices-ingress-ip
+  namespace: microservices
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:

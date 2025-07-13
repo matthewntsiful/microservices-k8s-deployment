@@ -1,52 +1,64 @@
+#!/bin/bash
+
+# Recreate all manifests with proper namespace
+cd k8s-manifests
+
+# Frontend
+cat > 13-frontend.yaml << 'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: adservice
+  name: frontend
   namespace: microservices
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: adservice
+      app: frontend
   template:
     metadata:
       labels:
-        app: adservice
+        app: frontend
     spec:
       containers:
       - name: server
-        image: matthewntsiful/microservices-adservice:latest
+        image: matthewntsiful/microservices-frontend:latest
         ports:
-        - containerPort: 9555
+        - containerPort: 8080
         envFrom:
         - configMapRef:
             name: microservices-config
         resources:
           requests:
-            cpu: 200m
-            memory: 180Mi
+            cpu: 100m
+            memory: 64Mi
           limits:
-            cpu: 300m
-            memory: 300Mi
+            cpu: 200m
+            memory: 128Mi
         livenessProbe:
-          grpc:
-            port: 9555
+          httpGet:
+            path: /_healthz
+            port: 8080
           initialDelaySeconds: 10
           periodSeconds: 10
         readinessProbe:
-          grpc:
-            port: 9555
+          httpGet:
+            path: /_healthz
+            port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: adservice
+  name: frontend
   namespace: microservices
 spec:
   selector:
-    app: adservice
+    app: frontend
   ports:
-  - port: 9555
-    targetPort: 9555
+  - port: 80
+    targetPort: 8080
+EOF
+
+echo "Manifests recreated with proper namespace!"

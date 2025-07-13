@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: microservices
 spec:
   replicas: 1
   selector:
@@ -20,12 +21,6 @@ spec:
         envFrom:
         - configMapRef:
             name: microservices-config
-        env:
-        - name: PORT
-          valueFrom:
-            configMapKeyRef:
-              name: microservices-config
-              key: PORT
         resources:
           requests:
             cpu: 100m
@@ -50,6 +45,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
+  namespace: microservices
 spec:
   selector:
     app: frontend
