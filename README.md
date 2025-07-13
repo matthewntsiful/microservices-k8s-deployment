@@ -1,1 +1,235 @@
-# microservices-k8s-deployment
+# Microservices Kubernetes Deployment
+
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com/)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://golang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![.NET](https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+
+![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-green.svg)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
+
+A production-ready Kubernetes deployment of a microservices-based e-commerce application, featuring 12 interconnected services with proper security, monitoring, and scalability configurations.
+
+## 🏗️ Architecture Overview
+
+This project demonstrates a complete microservices architecture deployed on Kubernetes, showcasing:
+
+- **12 Microservices** written in Go, Node.js, Python, Java, and C#
+- **Service Mesh Communication** via gRPC and HTTP
+- **Redis Cache** for session and cart storage
+- **Namespace Isolation** for security and organization
+- **Ingress Controller** for external access
+- **ConfigMaps & Secrets** for configuration management
+- **Resource Limits & Health Probes** for reliability
+
+## 🎯 Original Work Attribution
+
+This deployment is based on the excellent [Google Cloud Microservices Demo](https://github.com/GoogleCloudPlatform/microservices-demo) (formerly known as "Hipster Shop"). The original demo was created by Google Cloud Platform team to demonstrate cloud-native application development.
+
+**Key Enhancements Made:**
+- ✅ Kubernetes-native deployment manifests
+- ✅ Namespace isolation and security hardening  
+- ✅ Fixed service port mappings and health probes
+- ✅ Redis authentication and connection optimization
+- ✅ Production-ready resource limits and configurations
+- ✅ Ingress controller setup for external access
+
+## 🚀 Services Architecture
+
+| Service | Language | Port | Description |
+|---------|----------|------|-------------|
+| **Frontend** | Go | 8080 | Web UI and API gateway |
+| **Cart Service** | C# | 7070 | Shopping cart management |
+| **Product Catalog** | Go | 8080 | Product inventory and details |
+| **Currency Service** | Node.js | 8080 | Currency conversion |
+| **Payment Service** | Node.js | 8080 | Payment processing |
+| **Shipping Service** | Go | 8080 | Shipping cost calculation |
+| **Email Service** | Python | 8080 | Order confirmation emails |
+| **Checkout Service** | Go | 5050 | Order processing workflow |
+| **Recommendation** | Python | 8080 | Product recommendations |
+| **Ad Service** | Java | 9555 | Contextual advertisements |
+| **Redis Cart** | Redis | 6379 | Session and cart storage |
+| **Load Generator** | Python | - | Traffic simulation |
+
+## 📋 Prerequisites
+
+- **Kubernetes Cluster** (v1.20+)
+- **kubectl** configured and connected
+- **NGINX Ingress Controller** installed
+- **Docker** (for custom image builds)
+- **Minimum Resources**: 4 CPU cores, 8GB RAM
+
+### Quick Setup Commands
+
+```bash
+# Install NGINX Ingress Controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+
+# Verify installation
+kubectl get pods -n ingress-nginx
+```
+
+## 🛠️ Deployment Instructions
+
+### 1. Clone and Navigate
+```bash
+git clone <repository-url>
+cd microservices-k8s-deployment
+```
+
+### 2. Deploy in Order
+The manifests are numbered for proper deployment sequence:
+
+```bash
+# Deploy all services
+kubectl apply -f k8s-manifests/
+
+# Or deploy step by step
+kubectl apply -f k8s-manifests/00-namespace.yaml
+kubectl apply -f k8s-manifests/01-configmap.yaml
+kubectl apply -f k8s-manifests/02-secrets.yaml
+# ... continue with remaining files
+```
+
+### 3. Verify Deployment
+```bash
+# Check all pods are running
+kubectl get pods -n microservices
+
+# Check services
+kubectl get svc -n microservices
+
+# Check ingress
+kubectl get ingress -n microservices
+```
+
+### 4. Access the Application
+```bash
+# Get Ingress IP
+kubectl get ingress -n microservices
+
+# Access via browser
+http://<INGRESS_IP>/
+```
+
+## 🔧 Configuration Details
+
+### Environment Variables
+Key configurations managed via ConfigMap:
+- Service discovery endpoints
+- Feature flags (tracing, profiling)
+- Application ports and timeouts
+
+### Secrets Management
+Sensitive data stored in Kubernetes Secrets:
+- Redis authentication password
+- API keys for external services
+
+### Resource Allocation
+Each service configured with:
+- **CPU Requests**: 100-300m
+- **Memory Requests**: 64-256Mi  
+- **CPU Limits**: 200-500m
+- **Memory Limits**: 128-512Mi
+
+## 🔍 Monitoring & Debugging
+
+### Health Checks
+```bash
+# Check pod health
+kubectl describe pod <pod-name> -n microservices
+
+# View logs
+kubectl logs <pod-name> -n microservices
+
+# Port forward for debugging
+kubectl port-forward -n microservices svc/frontend 8080:80
+```
+
+### Common Issues & Solutions
+
+| Issue | Solution |
+|-------|----------|
+| Pods CrashLoopBackOff | Check logs: `kubectl logs <pod> -n microservices` |
+| Service connection refused | Verify port mappings in service manifests |
+| Redis authentication failed | Check REDIS_ADDR connection string format |
+| Ingress not accessible | Verify NGINX Ingress Controller is running |
+
+## 🏷️ Service Tags & Images
+
+All services use custom images hosted on Docker Hub:
+```
+matthewntsiful/microservices-<service-name>:latest
+```
+
+To build custom images:
+```bash
+# Example for frontend service
+docker build -t your-registry/microservices-frontend:latest ./src/frontend
+docker push your-registry/microservices-frontend:latest
+```
+
+## 🔐 Security Features
+
+- **Namespace Isolation**: All resources deployed in dedicated namespace
+- **Secret Management**: Sensitive data encrypted in Kubernetes Secrets
+- **Network Policies**: Service-to-service communication controls
+- **Resource Limits**: Prevent resource exhaustion attacks
+- **Redis Authentication**: Password-protected cache access
+
+## 📊 Performance & Scaling
+
+### Horizontal Pod Autoscaling
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: microservices
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+```
+
+### Load Testing
+Use the included load generator:
+```bash
+kubectl logs -f deployment/loadgenerator -n microservices
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Google Cloud Platform Team** for the original microservices demo
+- **Kubernetes Community** for the excellent orchestration platform
+- **CNCF Projects** (Kubernetes, gRPC, etc.) for cloud-native technologies
+
+## 📞 Support
+
+For issues and questions:
+- Create an issue in this repository
+- Check the [troubleshooting guide](#-monitoring--debugging)
+- Review the original [Google Cloud Microservices Demo](https://github.com/GoogleCloudPlatform/microservices-demo)
+
+---
+
+**⭐ Star this repository if it helped you learn Kubernetes microservices deployment!**
