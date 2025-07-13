@@ -15,6 +15,7 @@ spec:
       containers:
       - name: redis
         image: redis:alpine
+        command: ["redis-server", "--requirepass", "redis123"]
         ports:
         - containerPort: 6379
         resources:
