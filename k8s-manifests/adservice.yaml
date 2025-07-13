@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adservice
+  template:
+    metadata:
+      labels:
+        app: adservice
+    spec:
+      containers:
+      - name: server
+        image: matthewntsiful/microservices-adservice:latest
+        ports:
+        - containerPort: 9555
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adservice
+spec:
+  selector:
+    app: adservice
+  ports:
+  - port: 9555
+    targetPort: 9555

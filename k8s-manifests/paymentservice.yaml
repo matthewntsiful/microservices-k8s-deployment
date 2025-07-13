@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paymentservice
+  template:
+    metadata:
+      labels:
+        app: paymentservice
+    spec:
+      containers:
+      - name: server
+        image: matthewntsiful/microservices-paymentservice:latest
+        ports:
+        - containerPort: 50051
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        env:
+        - name: PAYMENT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets
+              key: PAYMENT_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentservice
+spec:
+  selector:
+    app: paymentservice
+  ports:
+  - port: 50051
+    targetPort: 50051

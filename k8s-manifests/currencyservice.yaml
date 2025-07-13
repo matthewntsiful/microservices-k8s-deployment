@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currencyservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: currencyservice
+  template:
+    metadata:
+      labels:
+        app: currencyservice
+    spec:
+      containers:
+      - name: server
+        image: matthewntsiful/microservices-currencyservice:latest
+        ports:
+        - containerPort: 7000
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: currencyservice
+spec:
+  selector:
+    app: currencyservice
+  ports:
+  - port: 7000
+    targetPort: 7000

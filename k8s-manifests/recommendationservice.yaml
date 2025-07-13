@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendationservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recommendationservice
+  template:
+    metadata:
+      labels:
+        app: recommendationservice
+    spec:
+      containers:
+      - name: server
+        image: matthewntsiful/microservices-recommendationservice:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendationservice
+spec:
+  selector:
+    app: recommendationservice
+  ports:
+  - port: 8080
+    targetPort: 8080

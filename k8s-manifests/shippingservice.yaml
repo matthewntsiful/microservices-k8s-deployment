@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shippingservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shippingservice
+  template:
+    metadata:
+      labels:
+        app: shippingservice
+    spec:
+      containers:
+      - name: server
+        image: matthewntsiful/microservices-shippingservice:latest
+        ports:
+        - containerPort: 50051
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shippingservice
+spec:
+  selector:
+    app: shippingservice
+  ports:
+  - port: 50051
+    targetPort: 50051

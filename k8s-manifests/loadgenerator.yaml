@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgenerator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadgenerator
+  template:
+    metadata:
+      labels:
+        app: loadgenerator
+    spec:
+      containers:
+      - name: main
+        image: matthewntsiful/microservices-loadgenerator:latest
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        env:
+        - name: FRONTEND_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config
+              key: FRONTEND_ADDR

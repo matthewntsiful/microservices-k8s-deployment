@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emailservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emailservice
+  template:
+    metadata:
+      labels:
+        app: emailservice
+    spec:
+      containers:
+      - name: server
+        image: matthewntsiful/microservices-emailservice:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        env:
+        - name: EMAIL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: microservices-secrets
+              key: EMAIL_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emailservice
+spec:
+  selector:
+    app: emailservice
+  ports:
+  - port: 5000
+    targetPort: 8080
