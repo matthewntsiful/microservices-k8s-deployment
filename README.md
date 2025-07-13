@@ -145,6 +145,9 @@ Each service configured with:
 
 ![Order Confirmation](screenshots/order-confirmation.png)
 
+### Kubernetes Lens Integration
+This project is monitored using [Kubernetes Lens](https://k8slens.dev/) for comprehensive cluster visualization and management.
+
 ### Health Checks
 ```bash
 # Check pod health
