@@ -17,7 +17,7 @@ spec:
       - name: server
         image: matthewntsiful/microservices-productcatalogservice:latest
         ports:
-        - containerPort: 3550
+        - containerPort: 8080
         envFrom:
         - configMapRef:
             name: microservices-config
@@ -29,13 +29,13 @@ spec:
             cpu: 200m
             memory: 128Mi
         livenessProbe:
-          grpc:
-            port: 3550
+          tcpSocket:
+            port: 8080
           initialDelaySeconds: 10
           periodSeconds: 10
         readinessProbe:
-          grpc:
-            port: 3550
+          tcpSocket:
+            port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
 ---
@@ -49,4 +49,4 @@ spec:
     app: productcatalogservice
   ports:
   - port: 3550
-    targetPort: 3550
+    targetPort: 8080

@@ -16,6 +16,7 @@ data:
   PAYMENT_SERVICE_ADDR: "paymentservice:50051"
   REDIS_ADDR: "redis-cart:6379"
   FRONTEND_ADDR: "frontend:80"
+  SHOPPING_ASSISTANT_SERVICE_ADDR: "shoppingassistantservice:80"
   
   # App configuration
   PORT: "8080"
