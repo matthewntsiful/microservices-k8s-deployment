@@ -17,7 +17,7 @@ spec:
       - name: server
         image: matthewntsiful/microservices-shippingservice:latest
         ports:
-        - containerPort: 50051
+        - containerPort: 8080
         envFrom:
         - configMapRef:
             name: microservices-config
@@ -39,4 +39,4 @@ spec:
     app: shippingservice
   ports:
   - port: 50051
-    targetPort: 50051
+    targetPort: 8080

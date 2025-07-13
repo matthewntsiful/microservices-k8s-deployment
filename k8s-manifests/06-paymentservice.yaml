@@ -17,7 +17,7 @@ spec:
       - name: server
         image: matthewntsiful/microservices-paymentservice:latest
         ports:
-        - containerPort: 50051
+        - containerPort: 8080
         envFrom:
         - configMapRef:
             name: microservices-config
@@ -45,4 +45,4 @@ spec:
     app: paymentservice
   ports:
   - port: 50051
-    targetPort: 50051
+    targetPort: 8080

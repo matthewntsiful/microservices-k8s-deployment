@@ -4,7 +4,8 @@ metadata:
   name: microservices-ingress
   namespace: microservices
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   rules:
@@ -18,17 +19,6 @@ spec:
             name: frontend
             port:
               number: 80
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: microservices-ingress-ip
-  namespace: microservices
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
   - http:
       paths:
       - path: /
