@@ -69,12 +69,12 @@ jobs:
     
     - name: Update manifests
       run: |
-        find k8s-manifests -name '*.yaml' -exec sed -i 's|matthewntsiful/microservices-|${{ env.REGISTRY }}/${{ github.repository }}/microservices-|g' {} \;
-        find k8s-manifests -name '*.yaml' -exec sed -i 's|:latest|:${{ env.IMAGE_TAG }}|g' {} \;
+        find k8s-manifests -name '*.yaml' -exec sed -i '' 's|matthewntsiful/microservices-|${{ env.REGISTRY }}/${{ github.repository }}/microservices-|g' {} \;
+        find k8s-manifests -name '*.yaml' -exec sed -i '' 's|:latest|:${{ env.IMAGE_TAG }}|g' {} \;
     
     - name: Deploy
       run: |
         kubectl apply -f k8s-manifests/ -n microservices
-        kubectl rollout restart deployment -n microservices --all
-        kubectl rollout status deployment --all -n microservices --timeout=300s
+        for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout restart $deployment -n microservices; done
+        for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout status $deployment -n microservices --timeout=300s; done
         echo "✅ Deployed successfully!"
