@@ -26,6 +26,7 @@ This project demonstrates a complete microservices architecture deployed on Kube
 - **Ingress Controller** for external access
 - **ConfigMaps & Secrets** for configuration management
 - **Resource Limits & Health Probes** for reliability
+- **Horizontal Pod Autoscaler (HPA)** for automatic scaling
 
 ## 🎯 Original Work Attribution
 
@@ -56,6 +57,11 @@ This deployment is based on the excellent [Google Cloud Microservices Demo](http
 | **Redis Cart** | Redis | 6379 | Session and cart storage |
 | **Load Generator** | Python | - | Traffic simulation |
 
+## 📚 Documentation
+
+- **[Architecture Guide](ARCHITECTURE.md)** - Detailed technical architecture and service interconnections
+- **[Autoscaling Guide](AUTOSCALING.md)** - HPA implementation and monitoring
+
 ## 📋 Prerequisites
 
 - **Kubernetes Cluster** (v1.20+)
@@ -70,8 +76,12 @@ This deployment is based on the excellent [Google Cloud Microservices Demo](http
 # Install NGINX Ingress Controller
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
 
+# Install Metrics Server (for HPA)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
 # Verify installation
 kubectl get pods -n ingress-nginx
+kubectl get pods -n kube-system | grep metrics-server
 ```
 
 ## 🛠️ Deployment Instructions
@@ -141,6 +151,14 @@ Each service configured with:
 - **CPU Limits**: 200-500m
 - **Memory Limits**: 128-512Mi
 
+### Autoscaling
+Horizontal Pod Autoscaler (HPA) configured for:
+- **Frontend**: 2-10 replicas (70% CPU, 80% memory)
+- **Cart Service**: 1-8 replicas (75% CPU)
+- **Checkout Service**: 1-6 replicas (70% CPU)
+- **Product Catalog**: 1-5 replicas (80% CPU)
+- **Recommendation**: 1-4 replicas (75% CPU)
+
 ## 🔍 Monitoring & Debugging
 
 ![Order Confirmation](screenshots/order-confirmation.png)
@@ -194,20 +212,13 @@ docker push your-registry/microservices-frontend:latest
 ## 📊 Performance & Scaling
 
 ### Horizontal Pod Autoscaling
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: frontend-hpa
-  namespace: microservices
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: frontend
-  minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 70
+```bash
+# Deploy HPA configurations
+kubectl apply -f k8s-manifests/16-hpa.yaml
+
+# Monitor scaling
+kubectl get hpa -n microservices
+kubectl top pods -n microservices
 ```
 
 ### Load Testing
