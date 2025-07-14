@@ -122,11 +122,14 @@ kubectl get ingress -n microservices
 
 ### 4. Access the Application
 ```bash
-# Get Ingress IP
+# Check ingress configuration
 kubectl get ingress -n microservices
 
-# Access via browser
-http://<INGRESS_IP>/
+# Add to /etc/hosts (for local access)
+echo "127.0.0.1 microservices.local" | sudo tee -a /etc/hosts
+
+# Access the application
+http://microservices.local/
 ```
 
 
