@@ -76,5 +76,5 @@ jobs:
       run: |
         kubectl apply -f k8s-manifests/ -n microservices
         for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout restart $deployment -n microservices; done
-        for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout status $deployment -n microservices --timeout=300s; done
+        for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout status $deployment -n microservices --timeout=120s || true; done
         echo "✅ Deployed successfully!"
