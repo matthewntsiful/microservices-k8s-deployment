@@ -34,8 +34,7 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
-        context: ./microservices-demo/src/${{ matrix.service }}
-        file: ./microservices-demo/src/${{ matrix.service }}/Dockerfile
+        context: ./microservices-demo/src/${{ matrix.service }}${{ matrix.service == 'cartservice' && '/src' || '' }}
         push: true
         tags: ${{ env.REGISTRY }}/${{ github.repository }}/microservices-${{ matrix.service }}:${{ env.IMAGE_TAG }}
 
