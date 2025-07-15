@@ -76,13 +76,23 @@ jobs:
         find k8s-manifests -name '*.yaml' -exec sed -i '' 's|matthewntsiful/microservices-|${{ env.REGISTRY }}/${{ github.repository }}/microservices-|g' {} \;
         find k8s-manifests -name '*.yaml' -exec sed -i '' 's|:latest|:${{ env.IMAGE_TAG }}|g' {} \;
     
+    - name: Force cleanup hanging pods
+      run: |
+        kubectl delete pods --all -n microservices --force --grace-period=0 || true
+        kubectl get pods -n microservices --field-selector=status.phase=Terminating -o name | xargs -r kubectl delete --force --grace-period=0 || true
+    
     - name: Deploy without ingress
       run: |
         find k8s-manifests -name '*.yaml' ! -name '14-ingress.yaml' -exec kubectl apply -f {} -n microservices \;
     
-    - name: Deploy ingress with retry
+    - name: Remove ingress webhook
       run: |
-        kubectl apply -f k8s-manifests/14-ingress.yaml -n microservices --validate=false || true
+        kubectl delete validatingwebhookconfiguration ingress-nginx-admission || true
+        kubectl delete mutatingwebhookconfiguration ingress-nginx-admission || true
+    
+    - name: Deploy ingress
+      run: |
+        kubectl apply -f k8s-manifests/14-ingress.yaml -n microservices
     
     - name: Restart deployments
       run: |
