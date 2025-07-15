@@ -102,3 +102,5 @@ jobs:
       run: |
         for deployment in $(kubectl get deployments -n microservices -o name | grep -v redis); do kubectl rollout status $deployment -n microservices --timeout=300s; done
         echo "✅ Zero-downtime deployment completed!"
+
+        ###
