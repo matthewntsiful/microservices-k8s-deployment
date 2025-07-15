@@ -76,26 +76,29 @@ jobs:
         find k8s-manifests -name '*.yaml' -exec sed -i '' 's|matthewntsiful/microservices-|${{ env.REGISTRY }}/${{ github.repository }}/microservices-|g' {} \;
         find k8s-manifests -name '*.yaml' -exec sed -i '' 's|:latest|:${{ env.IMAGE_TAG }}|g' {} \;
     
-    - name: Force cleanup hanging pods
+    - name: Deploy manifests
       run: |
-        kubectl delete pods --all -n microservices --force --grace-period=0 || true
-        kubectl get pods -n microservices --field-selector=status.phase=Terminating -o name | xargs -r kubectl delete --force --grace-period=0 || true
+        find k8s-manifests -name '*.yaml' ! -name '14-ingress.yaml' -exec kubectl apply -f {} \;
     
-    - name: Deploy without ingress
+    - name: Update deployment images (zero downtime)
       run: |
-        find k8s-manifests -name '*.yaml' ! -name '14-ingress.yaml' -exec kubectl apply -f {} -n microservices \;
-    
-    - name: Remove ingress webhook
-      run: |
-        kubectl delete validatingwebhookconfiguration ingress-nginx-admission || true
-        kubectl delete mutatingwebhookconfiguration ingress-nginx-admission || true
+        kubectl set image deployment/frontend frontend=${{ env.REGISTRY }}/${{ github.repository }}/microservices-frontend:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/cartservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-cartservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/checkoutservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-checkoutservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/productcatalogservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-productcatalogservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/currencyservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-currencyservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/paymentservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-paymentservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/shippingservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-shippingservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/emailservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-emailservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/recommendationservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-recommendationservice:${{ env.IMAGE_TAG }} -n microservices
+        kubectl set image deployment/adservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-adservice:${{ env.IMAGE_TAG }} -n microservices
     
     - name: Deploy ingress
       run: |
+        kubectl delete validatingwebhookconfiguration ingress-nginx-admission || true
         kubectl apply -f k8s-manifests/14-ingress.yaml -n microservices
     
-    - name: Restart deployments
+    - name: Wait for rollout
       run: |
-        for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout restart $deployment -n microservices; done
-        for deployment in $(kubectl get deployments -n microservices -o name); do kubectl rollout status $deployment -n microservices --timeout=120s || true; done
-        echo "✅ Deployed successfully!"
+        for deployment in $(kubectl get deployments -n microservices -o name | grep -v redis); do kubectl rollout status $deployment -n microservices --timeout=300s; done
+        echo "✅ Zero-downtime deployment completed!"
