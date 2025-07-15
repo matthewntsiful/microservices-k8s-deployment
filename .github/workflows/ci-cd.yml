@@ -3,6 +3,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'microservices-demo/src/**'
+      - 'k8s-manifests/**'
+      - '.github/workflows/ci-cd.yml'
   workflow_dispatch:
 
 env:

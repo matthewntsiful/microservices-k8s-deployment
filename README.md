@@ -86,45 +86,41 @@ kubectl get pods -n kube-system | grep metrics-server
 
 ## 🛠️ Deployment Instructions
 
-### 1. Clone and Navigate
-```bash
-git clone <repository-url>
-cd microservices-k8s-deployment
-```
+### Automated CI/CD Pipeline
 
-### 2. Deploy in Order
-The manifests are numbered for proper deployment sequence:
+**Prerequisites:**
+- Kind cluster running locally
+- GitHub self-hosted runner configured
+
+**Setup:**
+1. **Configure Self-Hosted Runner:**
+   ```bash
+   ./scripts/setup-github-runner.sh
+   cd ~/actions-runner
+   # Follow GitHub instructions to configure runner
+   ./run.sh
+   ```
+
+2. **Automatic Deployment:**
+   - Push to `main` branch triggers the pipeline
+   - Pipeline builds images → pushes to GHCR → deploys to Kind
+   - Manual trigger via GitHub Actions UI
+
+### Manual Deployment
 
 ```bash
 # Deploy all services
 kubectl apply -f k8s-manifests/
 
-# Or deploy step by step
-kubectl apply -f k8s-manifests/00-namespace.yaml
-kubectl apply -f k8s-manifests/01-configmap.yaml
-kubectl apply -f k8s-manifests/02-secrets.yaml
-# ... continue with remaining files
-```
-
-### 3. Verify Deployment
-```bash
-# Check all pods are running
+# Verify deployment
 kubectl get pods -n microservices
-
-# Check services
 kubectl get svc -n microservices
-
-# Check ingress
-kubectl get ingress -n microservices
 ```
 
 ![Cart](screenshots/cart.png)
 
-### 4. Access the Application
+### Access the Application
 ```bash
-# Check ingress configuration
-kubectl get ingress -n microservices
-
 # Add to /etc/hosts (for local access)
 echo "127.0.0.1 microservices.local" | sudo tee -a /etc/hosts
 
@@ -192,16 +188,21 @@ kubectl port-forward -n microservices svc/frontend 8080:80
 
 ## 🏷️ Service Tags & Images
 
-All services use custom images hosted on Docker Hub:
+**Container Registry:** GitHub Container Registry (GHCR)
 ```
-matthewntsiful/microservices-<service-name>:latest
+ghcr.io/matthewntsiful/microservices-k8s-deployment/microservices-<service-name>:latest
 ```
 
-To build custom images:
+**CI/CD Pipeline:**
+- **Build:** Builds all 10 microservice images
+- **Scan:** Security scans with Trivy
+- **Deploy:** Deploys to Kind cluster with rolling updates
+
+**Manual Build:**
 ```bash
-# Example for frontend service
-docker build -t your-registry/microservices-frontend:latest ./src/frontend
-docker push your-registry/microservices-frontend:latest
+# Build and push individual service
+docker build -t ghcr.io/username/repo/microservices-frontend:tag ./microservices-demo/src/frontend
+docker push ghcr.io/username/repo/microservices-frontend:tag
 ```
 
 ## 🔐 Security Features
