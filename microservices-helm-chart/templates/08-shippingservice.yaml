@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shippingservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.services.shippingservice.replicas }}
+  selector:
+    matchLabels:
+      app: shippingservice
+  template:
+    metadata:
+      labels:
+        app: shippingservice
+    spec:
+      containers:
+      - name: server
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.services.shippingservice.image }}:{{ .Values.global.imageTag }}
+        ports:
+        - containerPort: {{ .Values.services.shippingservice.containerPort }}
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        resources:
+          {{- toYaml .Values.services.shippingservice.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shippingservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: shippingservice
+  ports:
+  - port: {{ .Values.services.shippingservice.servicePort }}
+    targetPort: {{ .Values.services.shippingservice.containerPort }}

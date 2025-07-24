@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currencyservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.services.currencyservice.replicas }}
+  selector:
+    matchLabels:
+      app: currencyservice
+  template:
+    metadata:
+      labels:
+        app: currencyservice
+    spec:
+      containers:
+      - name: server
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.services.currencyservice.image }}:{{ .Values.global.imageTag }}
+        ports:
+        - containerPort: {{ .Values.services.currencyservice.containerPort }}
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        resources:
+          {{- toYaml .Values.services.currencyservice.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: currencyservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: currencyservice
+  ports:
+  - port: {{ .Values.services.currencyservice.servicePort }}
+    targetPort: {{ .Values.services.currencyservice.containerPort }}

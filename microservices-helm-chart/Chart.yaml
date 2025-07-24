@@ -1,0 +1,16 @@
+apiVersion: v2
+name: microservices
+description: A production-ready Kubernetes deployment of a microservices-based e-commerce application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - microservices
+  - kubernetes
+  - e-commerce
+  - grpc
+home: https://github.com/matthewntsiful/microservices-k8s-deployment
+sources:
+  - https://github.com/matthewntsiful/microservices-k8s-deployment
+maintainers:
+  - name: Matthieu Ntsiful

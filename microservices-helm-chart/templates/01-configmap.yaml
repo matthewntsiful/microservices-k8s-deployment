@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: microservices-config
+  namespace: {{ .Values.global.namespace }}
+data:
+  PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:{{ .Values.services.productcatalogservice.servicePort }}"
+  CURRENCY_SERVICE_ADDR: "currencyservice:{{ .Values.services.currencyservice.servicePort }}"
+  CART_SERVICE_ADDR: "cartservice:{{ .Values.services.cartservice.servicePort }}"
+  RECOMMENDATION_SERVICE_ADDR: "recommendationservice:{{ .Values.services.recommendationservice.servicePort }}"
+  SHIPPING_SERVICE_ADDR: "shippingservice:{{ .Values.services.shippingservice.servicePort }}"
+  CHECKOUT_SERVICE_ADDR: "checkoutservice:{{ .Values.services.checkoutservice.servicePort }}"
+  AD_SERVICE_ADDR: "adservice:{{ .Values.services.adservice.servicePort }}"
+  EMAIL_SERVICE_ADDR: "emailservice:{{ .Values.services.emailservice.servicePort }}"
+  PAYMENT_SERVICE_ADDR: "paymentservice:{{ .Values.services.paymentservice.servicePort }}"
+  REDIS_ADDR: "redis-cart:{{ .Values.redis.port }}"
+  FRONTEND_ADDR: "frontend:{{ .Values.services.frontend.servicePort }}"
+  PORT: "{{ .Values.services.frontend.containerPort }}"
+  ENABLE_PROFILER: "{{ if .Values.config.enableProfiler }}1{{ else }}0{{ end }}"
+  DISABLE_TRACING: "{{ if .Values.config.disableTracing }}1{{ else }}0{{ end }}"
+  DISABLE_PROFILER: "{{ if .Values.config.disableProfiler }}1{{ else }}0{{ end }}"

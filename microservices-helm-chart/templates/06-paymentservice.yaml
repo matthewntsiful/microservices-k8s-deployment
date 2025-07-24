@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.services.paymentservice.replicas }}
+  selector:
+    matchLabels:
+      app: paymentservice
+  template:
+    metadata:
+      labels:
+        app: paymentservice
+    spec:
+      containers:
+      - name: server
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.services.paymentservice.image }}:{{ .Values.global.imageTag }}
+        ports:
+        - containerPort: {{ .Values.services.paymentservice.containerPort }}
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        env:
+        - name: PAYMENT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.services.paymentservice.env.PAYMENT_API_KEY.secretKeyRef.name }}
+              key: {{ .Values.services.paymentservice.env.PAYMENT_API_KEY.secretKeyRef.key }}
+        resources:
+          {{- toYaml .Values.services.paymentservice.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: paymentservice
+  ports:
+  - port: {{ .Values.services.paymentservice.servicePort }}
+    targetPort: {{ .Values.services.paymentservice.containerPort }}

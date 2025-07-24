@@ -1,0 +1,214 @@
+global:
+  namespace: microservices
+  imageRegistry: matthewntsiful
+  imageTag: latest
+
+config:
+  enableProfiler: false
+  disableTracing: true
+  disableProfiler: true
+
+ingress:
+  enabled: true
+  className: nginx
+  host: microservices.local
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+autoscaling:
+  enabled: true
+  frontend:
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  cartservice:
+    minReplicas: 1
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 75
+  checkoutservice:
+    minReplicas: 1
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  productcatalogservice:
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  recommendationservice:
+    minReplicas: 1
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 75
+
+services:
+  frontend:
+    image: microservices-frontend
+    containerPort: 8080
+    servicePort: 80
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  productcatalogservice:
+    image: microservices-productcatalogservice
+    containerPort: 8080
+    servicePort: 3550
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  currencyservice:
+    image: microservices-currencyservice
+    containerPort: 8080
+    servicePort: 7000
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  paymentservice:
+    image: microservices-paymentservice
+    containerPort: 8080
+    servicePort: 50051
+    replicas: 1
+    env:
+      PAYMENT_API_KEY:
+        secretKeyRef:
+          name: microservices-secrets
+          key: PAYMENT_API_KEY
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  emailservice:
+    image: microservices-emailservice
+    containerPort: 8080
+    servicePort: 5000
+    replicas: 1
+    env:
+      EMAIL_API_KEY:
+        secretKeyRef:
+          name: microservices-secrets
+          key: EMAIL_API_KEY
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  shippingservice:
+    image: microservices-shippingservice
+    containerPort: 8080
+    servicePort: 50051
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  adservice:
+    image: microservices-adservice
+    containerPort: 9555
+    servicePort: 9555
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 180Mi
+      limits:
+        cpu: 300m
+        memory: 300Mi
+  
+  recommendationservice:
+    image: microservices-recommendationservice
+    containerPort: 8080
+    servicePort: 8080
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 220Mi
+      limits:
+        cpu: 200m
+        memory: 450Mi
+  
+  cartservice:
+    image: microservices-cartservice
+    containerPort: 7070
+    servicePort: 7070
+    replicas: 1
+    env:
+      REDIS_ADDR: "redis-cart:6379,password=redis123"
+    resources:
+      requests:
+        cpu: 200m
+        memory: 64Mi
+      limits:
+        cpu: 300m
+        memory: 128Mi
+  
+  checkoutservice:
+    image: microservices-checkoutservice
+    containerPort: 5050
+    servicePort: 5050
+    replicas: 1
+    env:
+      PORT: "5050"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  
+  loadgenerator:
+    image: microservices-loadgenerator
+    replicas: 1
+    env:
+      FRONTEND_ADDR:
+        configMapKeyRef:
+          name: microservices-config
+          key: FRONTEND_ADDR
+    resources:
+      requests:
+        cpu: 300m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+redis:
+  image: redis:7
+  port: 6379
+  command: ["redis-server", "--requirepass", "redis123"]
+  resources:
+    requests:
+      cpu: 70m
+      memory: 200Mi
+    limits:
+      cpu: 125m
+      memory: 256Mi

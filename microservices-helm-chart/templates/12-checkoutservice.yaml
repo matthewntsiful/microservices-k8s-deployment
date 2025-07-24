@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkoutservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.services.checkoutservice.replicas }}
+  selector:
+    matchLabels:
+      app: checkoutservice
+  template:
+    metadata:
+      labels:
+        app: checkoutservice
+    spec:
+      containers:
+      - name: server
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.services.checkoutservice.image }}:{{ .Values.global.imageTag }}
+        ports:
+        - containerPort: {{ .Values.services.checkoutservice.containerPort }}
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        env:
+        - name: PORT
+          value: {{ .Values.services.checkoutservice.env.PORT | quote }}
+        resources:
+          {{- toYaml .Values.services.checkoutservice.resources | nindent 10 }}
+        livenessProbe:
+          grpc:
+            port: {{ .Values.services.checkoutservice.containerPort }}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          grpc:
+            port: {{ .Values.services.checkoutservice.containerPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkoutservice
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: checkoutservice
+  ports:
+  - port: {{ .Values.services.checkoutservice.servicePort }}
+    targetPort: {{ .Values.services.checkoutservice.containerPort }}

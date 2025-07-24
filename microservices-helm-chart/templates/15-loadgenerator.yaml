@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgenerator
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.services.loadgenerator.replicas }}
+  selector:
+    matchLabels:
+      app: loadgenerator
+  template:
+    metadata:
+      labels:
+        app: loadgenerator
+    spec:
+      containers:
+      - name: main
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.services.loadgenerator.image }}:{{ .Values.global.imageTag }}
+        envFrom:
+        - configMapRef:
+            name: microservices-config
+        {{- if .Values.services.loadgenerator.env }}
+        env:
+        {{- range $key, $value := .Values.services.loadgenerator.env }}
+        {{- if $value.configMapKeyRef }}
+        - name: {{ $key }}
+          valueFrom:
+            configMapKeyRef:
+              name: {{ $value.configMapKeyRef.name }}
+              key: {{ $value.configMapKeyRef.key }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.services.loadgenerator.resources | nindent 10 }}
