@@ -42,6 +42,7 @@ metadata:
   name: frontend
   namespace: {{ .Values.global.namespace }}
 spec:
+  type: {{ .Values.services.frontend.type }}
   selector:
     app: frontend
   ports:

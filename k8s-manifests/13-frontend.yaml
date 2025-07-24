@@ -47,6 +47,7 @@ metadata:
   name: frontend
   namespace: microservices
 spec:
+  type: LoadBalancer
   selector:
     app: frontend
   ports:

@@ -45,6 +45,7 @@ services:
     image: microservices-frontend
     containerPort: 8080
     servicePort: 80
+    type: LoadBalancer
     replicas: 1
     resources:
       requests:

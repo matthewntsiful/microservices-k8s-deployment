@@ -1,16 +1,16 @@
 1. Get the application URL by running these commands:
 {{- if .Values.ingress.enabled }}
   http://{{ .Values.ingress.host }}/
-{{- else if contains "NodePort" .Values.service.type }}
+{{- else if contains "LoadBalancer" .Values.services.frontend.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status by running 'kubectl get --namespace {{ .Values.global.namespace }} svc -w frontend'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Values.global.namespace }} frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.services.frontend.servicePort }}
+{{- else if contains "NodePort" .Values.services.frontend.type }}
   export NODE_PORT=$(kubectl get --namespace {{ .Values.global.namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services frontend)
   export NODE_IP=$(kubectl get nodes --namespace {{ .Values.global.namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   echo http://$NODE_IP:$NODE_PORT
-{{- else if contains "LoadBalancer" .Values.service.type }}
-     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Values.global.namespace }} svc -w frontend'
-  export SERVICE_IP=$(kubectl get svc --namespace {{ .Values.global.namespace }} frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
-  echo http://$SERVICE_IP:{{ .Values.services.frontend.servicePort }}
-{{- else if contains "ClusterIP" .Values.service.type }}
+{{- else if contains "ClusterIP" .Values.services.frontend.type }}
   export POD_NAME=$(kubectl get pods --namespace {{ .Values.global.namespace }} -l "app=frontend" -o jsonpath="{.items[0].metadata.name}")
   export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Values.global.namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
   echo "Visit http://127.0.0.1:8080 to use your application"
