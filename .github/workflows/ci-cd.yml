@@ -7,9 +7,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+  actions: read
+
 env:
-  AWS_REGION: us-east-1
-  EKS_CLUSTER_NAME: amazon-eks-cluster
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
   GHCR_REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.sha }}
 
@@ -90,7 +97,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Install kubectl
       uses: azure/setup-kubectl@v3
@@ -104,7 +111,7 @@ jobs:
 
     - name: Update kubeconfig
       run: |
-        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
 
     - name: Verify cluster connection
       run: |
@@ -161,7 +168,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Install kubectl and Helm
       run: |
@@ -171,7 +178,7 @@ jobs:
 
     - name: Update kubeconfig
       run: |
-        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
 
     - name: Rollback deployment
       run: |
@@ -188,7 +195,7 @@ jobs:
     - name: Notify on success
       if: needs.deploy-to-eks.result == 'success'
       run: |
-        echo "✅ Deployment successful to EKS cluster: $EKS_CLUSTER_NAME"
+        echo "✅ Deployment successful to EKS cluster: ${{ secrets.EKS_CLUSTER_NAME }}"
         echo "🚀 Image tag: $IMAGE_TAG"
         echo "🔗 Commit: ${{ github.sha }}"
 
