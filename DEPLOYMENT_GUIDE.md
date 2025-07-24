@@ -1,77 +1,224 @@
-# Microservices Kubernetes Deployment Guide
+# DevOps Deployment Guide - Microservices on EKS
 
 ## 📋 Table of Contents
-- [Prerequisites](#prerequisites)
-- [Architecture Overview](#architecture-overview)
-- [Deployment Methods](#deployment-methods)
-- [Step-by-Step Deployment](#step-by-step-deployment)
-- [Monitoring Setup](#monitoring-setup)
-- [Troubleshooting](#troubleshooting)
-- [Production Considerations](#production-considerations)
+- [Infrastructure Prerequisites](#infrastructure-prerequisites)
+- [DevOps Architecture](#devops-architecture)
+- [Infrastructure as Code](#infrastructure-as-code)
+- [CI/CD Pipeline Setup](#cicd-pipeline-setup)
+- [Automated Deployment](#automated-deployment)
+- [Monitoring & Observability](#monitoring--observability)
+- [Production Operations](#production-operations)
+- [Disaster Recovery](#disaster-recovery)
 
-## 🔧 Prerequisites
+## 🛠️ Infrastructure Prerequisites
 
-### Required Tools
+### DevOps Toolchain
 ```bash
-# Install required CLI tools
-kubectl --version    # v1.20+
-helm version        # v3.0+
-eksctl version      # Latest
-aws --version       # v2.0+
+# Core Infrastructure Tools
+terraform --version  # v1.0+ (Infrastructure as Code)
+kubectl --version    # v1.20+ (Kubernetes CLI)
+helm version        # v3.0+ (Package Manager)
+eksctl version      # Latest (EKS Management)
+aws --version       # v2.0+ (AWS CLI)
+
+# CI/CD Tools
+docker --version    # Container Runtime
+git --version       # Version Control
+jq --version        # JSON Processing
+yq --version        # YAML Processing
+
+# Monitoring & Observability
+prometheus --version # Metrics Collection
+grafana-cli --version # Dashboards
 ```
 
-### AWS Requirements
-- **EKS Cluster** with 3+ nodes (t3.medium or larger)
-- **VPC** with public/private subnets
-- **IAM permissions** for EKS, ALB, and EC2
-- **AWS CLI** configured with proper credentials
+### AWS Infrastructure Requirements
+- **EKS Cluster** with managed node groups
+- **VPC** with public/private subnets across 3 AZs
+- **IAM Roles** for EKS, ALB Controller, and service accounts
+- **ECR Repository** for container images
+- **CloudWatch** for logging and monitoring
+- **Route53** for DNS management (production)
+- **ACM** for SSL/TLS certificates
 
-### Cluster Specifications
-- **Kubernetes Version**: 1.20+
-- **Node Type**: t3.medium (2 vCPU, 4GB RAM) minimum
-- **Node Count**: 3 nodes minimum
-- **Storage**: 20GB EBS per node
+### Production Cluster Specifications
+```yaml
+# EKS Cluster Configuration
+kubernetes_version: "1.28"
+node_groups:
+  - name: "system"
+    instance_types: ["t3.medium"]
+    min_size: 2
+    max_size: 4
+    desired_size: 3
+  - name: "applications"
+    instance_types: ["t3.large"]
+    min_size: 3
+    max_size: 10
+    desired_size: 5
+storage:
+  ebs_csi_driver: enabled
+  storage_classes: ["gp3", "io1"]
+```
 
-## 🏗️ Architecture Overview
+## 🏗️ DevOps Architecture
 
-### Microservices Components
-| Service | Language | Port | Description |
-|---------|----------|------|-------------|
-| Frontend | Go | 8080 | Web UI and API gateway |
-| Cart Service | C# | 7070 | Shopping cart management |
-| Product Catalog | Go | 8080 | Product inventory |
-| Currency Service | Node.js | 8080 | Currency conversion |
-| Payment Service | Node.js | 8080 | Payment processing |
-| Shipping Service | Go | 8080 | Shipping calculations |
-| Email Service | Python | 8080 | Order notifications |
-| Checkout Service | Go | 5050 | Order processing |
-| Recommendation | Python | 8080 | Product recommendations |
-| Ad Service | Java | 9555 | Advertisements |
-| Redis Cart | Redis | 6379 | Session storage |
-| Load Generator | Python | - | Traffic simulation |
+### Infrastructure Stack
+```yaml
+# DevOps Technology Stack
+Cloud Provider: AWS
+Container Orchestration: Amazon EKS
+Service Mesh: AWS Load Balancer Controller + Istio (optional)
+Container Registry: Amazon ECR
+Secrets Management: AWS Secrets Manager + External Secrets Operator
+Monitoring: Prometheus + Grafana + CloudWatch
+Logging: Fluent Bit + CloudWatch Logs
+Security: Pod Security Standards + OPA Gatekeeper
+CI/CD: GitHub Actions + ArgoCD
+Infrastructure as Code: Terraform + Helm
+```
 
-### Infrastructure Components
-- **AWS Application Load Balancer (ALB)** - External traffic routing
-- **ClusterIP Services** - Internal service communication
-- **Horizontal Pod Autoscaler (HPA)** - Automatic scaling
-- **ConfigMaps & Secrets** - Configuration management
-- **Prometheus Node Exporter** - Metrics collection
-- **Grafana** - Monitoring dashboards
+### DevOps Pipeline Components
+| Component | Technology | Purpose |
+|-----------|------------|----------|
+| **Source Control** | Git + GitHub | Code versioning and collaboration |
+| **CI/CD** | GitHub Actions | Automated build, test, deploy |
+| **Image Registry** | Amazon ECR | Container image storage |
+| **Infrastructure** | Terraform + Helm | Infrastructure as Code |
+| **Configuration** | ConfigMaps + Secrets | Environment configuration |
+| **Service Discovery** | Kubernetes DNS | Internal service communication |
+| **Load Balancing** | AWS ALB + Ingress | Traffic distribution |
+| **Autoscaling** | HPA + VPA + CA | Resource optimization |
+| **Monitoring** | Prometheus + Grafana | Metrics and alerting |
+| **Logging** | Fluent Bit + CloudWatch | Centralized logging |
+| **Security** | RBAC + PSS + Network Policies | Security controls |
 
-## 🚀 Deployment Methods
+### Network Architecture
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Internet      │────│  AWS ALB         │────│  EKS Cluster    │
+│   Gateway       │    │  (Public Subnet) │    │ (Private Subnet)│
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                              │                         │
+                              ▼                         ▼
+                       ┌──────────────┐         ┌──────────────┐
+                       │   Route53    │         │ Microservices│
+                       │   (DNS)      │         │   Pods       │
+                       └──────────────┘         └──────────────┘
+```
 
-This project supports two deployment approaches:
+## 📜 Infrastructure as Code
 
-### Method 1: Helm Chart (Recommended)
-- **Production-ready** with configurable values
-- **AWS ALB Ingress** with proper IAM setup
-- **ClusterIP services** for internal communication
-- **Autoscaling** and monitoring included
+### Terraform Infrastructure
+```hcl
+# terraform/main.tf
+module "eks" {
+  source = "terraform-aws-modules/eks/aws"
+  
+  cluster_name    = "microservices-cluster"
+  cluster_version = "1.28"
+  
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+  
+  node_groups = {
+    system = {
+      desired_capacity = 3
+      max_capacity     = 5
+      min_capacity     = 2
+      instance_types   = ["t3.medium"]
+    }
+    applications = {
+      desired_capacity = 5
+      max_capacity     = 10
+      min_capacity     = 3
+      instance_types   = ["t3.large"]
+    }
+  }
+}
+```
 
-### Method 2: Kubernetes Manifests
-- **Direct kubectl** deployment
-- **NGINX Ingress** with LoadBalancer service
-- **Static configuration** for testing/development
+### Helm Chart Structure
+```
+microservices-helm-chart/
+├── Chart.yaml              # Chart metadata
+├── values.yaml             # Default configuration
+├── values-prod.yaml        # Production overrides
+├── values-staging.yaml     # Staging overrides
+└── templates/
+    ├── configmap.yaml      # Application configuration
+    ├── secrets.yaml        # Sensitive data
+    ├── deployments/        # Service deployments
+    ├── services/           # Service definitions
+    ├── ingress.yaml        # Traffic routing
+    └── hpa.yaml            # Autoscaling policies
+```
+
+## 🔄 CI/CD Pipeline Setup
+
+### GitHub Actions Workflow
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy Microservices
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Build and push images
+      run: |
+        aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
+        ./scripts/build-and-push.sh
+        
+    - name: Deploy to EKS
+      run: |
+        aws eks update-kubeconfig --name microservices-cluster
+        helm upgrade --install microservices ./microservices-helm-chart \
+          --namespace microservices \
+          --create-namespace \
+          --values values-prod.yaml
+```
+
+### GitOps with ArgoCD
+```yaml
+# argocd/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: microservices
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/microservices-k8s-deployment
+    targetRevision: HEAD
+    path: microservices-helm-chart
+    helm:
+      valueFiles:
+      - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: microservices
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
 
 ## 📖 Step-by-Step Deployment
 

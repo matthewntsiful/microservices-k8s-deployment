@@ -1,6 +1,31 @@
-# Troubleshooting Guide
+# DevOps Troubleshooting & Operations Guide
 
-## 🚨 Common Issues and Solutions
+## 🚨 Production Incident Response
+
+### Incident Severity Levels
+| Severity | Description | Response Time | Escalation |
+|----------|-------------|---------------|------------|
+| **P0** | Complete service outage | 15 minutes | Immediate |
+| **P1** | Critical feature down | 1 hour | Within 30 min |
+| **P2** | Performance degradation | 4 hours | Within 2 hours |
+| **P3** | Minor issues | 24 hours | Next business day |
+
+### On-Call Runbook
+```bash
+# Quick Health Check Script
+#!/bin/bash
+echo "=== INCIDENT RESPONSE CHECKLIST ==="
+echo "1. Check cluster status"
+kubectl get nodes
+echo "2. Check critical pods"
+kubectl get pods -n microservices | grep -E '(frontend|checkout|payment)'
+echo "3. Check ingress status"
+kubectl get ingress -n microservices
+echo "4. Check recent events"
+kubectl get events -n microservices --sort-by='.lastTimestamp' | tail -10
+```
+
+## 🔧 Operational Issues and Solutions
 
 ### 1. Environment Variable Issues
 
@@ -160,7 +185,75 @@ kubectl describe svc grafana -n monitoring
 kubectl port-forward svc/grafana 3000:80 -n monitoring
 ```
 
-## 🔍 Debugging Commands
+## 📊 DevOps Monitoring & Alerting
+
+### Prometheus Alerts
+```yaml
+# alerts/microservices.yml
+groups:
+- name: microservices
+  rules:
+  - alert: PodCrashLooping
+    expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Pod {{ $labels.pod }} is crash looping"
+      
+  - alert: HighMemoryUsage
+    expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.8
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.pod }}"
+```
+
+### Grafana Dashboards
+```json
+{
+  "dashboard": {
+    "title": "Microservices Operations",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "targets": [{
+          "expr": "sum(rate(http_requests_total[5m])) by (service)"
+        }]
+      },
+      {
+        "title": "Error Rate",
+        "targets": [{
+          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))"
+        }]
+      }
+    ]
+  }
+}
+```
+
+### SLI/SLO Definitions
+```yaml
+# Service Level Indicators
+slis:
+  availability:
+    description: "Percentage of successful requests"
+    query: "sum(rate(http_requests_total{status!~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))"
+    target: 99.9%
+    
+  latency:
+    description: "95th percentile response time"
+    query: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+    target: "< 200ms"
+    
+  throughput:
+    description: "Requests per second"
+    query: "sum(rate(http_requests_total[5m]))"
+    target: "> 1000 RPS"
+```
+
+## 🔍 Operational Debugging
 
 ### Pod Debugging
 ```bash

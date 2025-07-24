@@ -1,32 +1,39 @@
-# Microservices Kubernetes Deployment
+# DevOps Microservices Platform on AWS EKS
 
+[![AWS EKS](https://img.shields.io/badge/AWS-EKS-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/eks/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com/)
-[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://golang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![.NET](https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-623CE4?style=for-the-badge&logo=terraform&logoColor=white)](https://terraform.io/)
+[![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)](https://helm.sh/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)](https://grafana.com/)
 
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
-![Status](https://img.shields.io/badge/Status-Production%20Ready-green.svg)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
+![Infrastructure](https://img.shields.io/badge/Infrastructure-Production%20Ready-green.svg)
+![DevOps](https://img.shields.io/badge/DevOps-CI%2FCD%20Enabled-blue.svg)
 
-A production-ready Kubernetes deployment of a microservices-based e-commerce application, featuring 12 interconnected services with proper security, monitoring, and scalability configurations.
+**Enterprise-grade DevOps platform** demonstrating production-ready microservices deployment on AWS EKS with complete CI/CD pipeline, Infrastructure as Code, monitoring, and operational best practices.
 
 ![Frontend](screenshots/frontend.png)
 
-## 🏗️ Architecture Overview
+## 🏗️ DevOps Infrastructure Architecture
 
-This project demonstrates a complete microservices architecture deployed on Kubernetes, showcasing:
+This platform demonstrates **enterprise DevOps practices** for microservices deployment, featuring:
 
-- **12 Microservices** written in Go, Node.js, Python, Java, and C#
-- **Service Mesh Communication** via gRPC and HTTP
-- **Redis Cache** for session and cart storage
-- **Namespace Isolation** for security and organization
-- **Ingress Controller** for external access
-- **ConfigMaps & Secrets** for configuration management
-- **Resource Limits & Health Probes** for reliability
-- **Horizontal Pod Autoscaler (HPA)** for automatic scaling
+### Infrastructure Components
+- **AWS EKS Cluster** with managed node groups and auto-scaling
+- **Application Load Balancer (ALB)** with AWS Load Balancer Controller
+- **Amazon ECR** for container image registry
+- **AWS Secrets Manager** integration for secure configuration
+- **CloudWatch** for centralized logging and monitoring
+- **Route53** for DNS management and service discovery
+
+### DevOps Automation
+- **Infrastructure as Code** with Terraform and Helm charts
+- **CI/CD Pipeline** with GitHub Actions and GitOps
+- **Automated Testing** with security scanning and quality gates
+- **Blue-Green Deployments** with zero-downtime releases
+- **Monitoring & Alerting** with Prometheus and Grafana
+- **Incident Response** with runbooks and escalation procedures
 
 ## 🎯 Original Work Attribution
 
