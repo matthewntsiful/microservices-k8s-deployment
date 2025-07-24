@@ -16,6 +16,7 @@ spec:
       containers:
       - name: server
         image: {{ .Values.global.imageRegistry }}/{{ .Values.services.frontend.image }}:{{ .Values.global.imageTag }}
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: {{ .Values.services.frontend.containerPort }}
         envFrom:
