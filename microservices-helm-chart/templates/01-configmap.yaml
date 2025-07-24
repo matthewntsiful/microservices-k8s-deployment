@@ -15,6 +15,7 @@ data:
   PAYMENT_SERVICE_ADDR: "paymentservice:{{ .Values.services.paymentservice.servicePort }}"
   REDIS_ADDR: "redis-cart:{{ .Values.redis.port }}"
   FRONTEND_ADDR: "frontend:{{ .Values.services.frontend.servicePort }}"
+  SHOPPING_ASSISTANT_SERVICE_ADDR: ""
   PORT: "{{ .Values.services.frontend.containerPort }}"
   ENABLE_PROFILER: "{{ if .Values.config.enableProfiler }}1{{ else }}0{{ end }}"
   DISABLE_TRACING: "{{ if .Values.config.disableTracing }}1{{ else }}0{{ end }}"
