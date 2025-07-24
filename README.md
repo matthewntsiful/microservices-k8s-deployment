@@ -59,6 +59,8 @@ This deployment is based on the excellent [Google Cloud Microservices Demo](http
 
 ## 📚 Documentation
 
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete step-by-step deployment instructions
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Architecture Guide](ARCHITECTURE.md)** - Detailed technical architecture and service interconnections
 - **[Autoscaling Guide](AUTOSCALING.md)** - HPA implementation and monitoring
 
