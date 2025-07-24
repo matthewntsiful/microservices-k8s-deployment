@@ -7,7 +7,7 @@ config:
   enableProfiler: false
   disableTracing: true
   disableProfiler: true
-  shoppingAssistantServiceAddr: ""
+  shoppingAssistantServiceAddr: "disabled"
 
 ingress:
   enabled: true
