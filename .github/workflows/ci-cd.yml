@@ -1,106 +1,200 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline - Build, Scan & Deploy to EKS
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'microservices-demo/src/**'
-      - 'k8s-manifests/**'
-      - '.github/workflows/ci-cd.yml'
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: amazon-eks-cluster
+  GHCR_REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build:
-    name: Build Images
+  build-and-scan:
+    name: Build Images & Security Scan
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     strategy:
       matrix:
-        service: [frontend, cartservice, checkoutservice, productcatalogservice, currencyservice, paymentservice, shippingservice, emailservice, recommendationservice, adservice]
+        service:
+          - frontend
+          - cartservice
+          - productcatalogservice
+          - currencyservice
+          - paymentservice
+          - shippingservice
+          - emailservice
+          - checkoutservice
+          - recommendationservice
+          - adservice
+          - loadgenerator
+          - shoppingassistantservice
+    
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: recursive
-    
-    - name: Login to GHCR
+
+    - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ env.REGISTRY }}
+        registry: ${{ env.GHCR_REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Build and push
-      uses: docker/build-push-action@v5
-      with:
-        context: ./microservices-demo/src/${{ matrix.service }}${{ matrix.service == 'cartservice' && '/src' || '' }}
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ github.repository }}/microservices-${{ matrix.service }}:${{ env.IMAGE_TAG }}
 
-  scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: read
-      security-events: write
-    strategy:
-      matrix:
-        service: [frontend, cartservice, checkoutservice, productcatalogservice, currencyservice, paymentservice, shippingservice, emailservice, recommendationservice, adservice]
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Scan image
+    - name: Build Docker image
+      run: |
+        cd microservices-demo/src/${{ matrix.service }}
+        docker build -t $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:$IMAGE_TAG .
+        docker tag $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:$IMAGE_TAG $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:latest
+
+    - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/microservices-${{ matrix.service }}:${{ env.IMAGE_TAG }}
-        format: 'table'
-        severity: 'CRITICAL,HIGH'
+        image-ref: ${{ env.GHCR_REGISTRY }}/${{ github.repository_owner }}/microservices-${{ matrix.service }}:${{ env.IMAGE_TAG }}
+        format: 'sarif'
+        output: 'trivy-results-${{ matrix.service }}.sarif'
 
-  deploy:
-    name: Deploy to Kind
-    runs-on: self-hosted
-    needs: [build, scan]
-    permissions:
-      contents: read
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+
+    - name: Check for HIGH/CRITICAL vulnerabilities
+      run: |
+        trivy image --exit-code 1 --severity HIGH,CRITICAL $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:$IMAGE_TAG
+
+    - name: Push image to GHCR
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker push $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:$IMAGE_TAG
+        docker push $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:latest
+
+  deploy-to-eks:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: build-and-scan
+    if: github.ref == 'refs/heads/main'
+    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Update manifests
-      run: |
-        find k8s-manifests -name '*.yaml' -exec sed -i '' 's|matthewntsiful/microservices-|${{ env.REGISTRY }}/${{ github.repository }}/microservices-|g' {} \;
-        find k8s-manifests -name '*.yaml' -exec sed -i '' 's|:latest|:${{ env.IMAGE_TAG }}|g' {} \;
-    
-    - name: Deploy manifests
-      run: |
-        find k8s-manifests -name '*.yaml' ! -name '14-ingress.yaml' -exec kubectl apply -f {} \;
-    
-    - name: Update deployment images (zero downtime)
-      run: |
-        kubectl set image deployment/frontend frontend=${{ env.REGISTRY }}/${{ github.repository }}/microservices-frontend:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/cartservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-cartservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/checkoutservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-checkoutservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/productcatalogservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-productcatalogservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/currencyservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-currencyservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/paymentservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-paymentservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/shippingservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-shippingservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/emailservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-emailservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/recommendationservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-recommendationservice:${{ env.IMAGE_TAG }} -n microservices
-        kubectl set image deployment/adservice server=${{ env.REGISTRY }}/${{ github.repository }}/microservices-adservice:${{ env.IMAGE_TAG }} -n microservices
-    
-    - name: Deploy ingress
-      run: |
-        kubectl delete validatingwebhookconfiguration ingress-nginx-admission || true
-        kubectl apply -f k8s-manifests/14-ingress.yaml -n microservices
-    
-    - name: Wait for rollout
-      run: |
-        for deployment in $(kubectl get deployments -n microservices -o name | grep -v redis); do kubectl rollout status $deployment -n microservices --timeout=300s; done
-        echo "✅ Zero-downtime deployment completed!"
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-        ###
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: '3.12.0'
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
+    - name: Verify cluster connection
+      run: |
+        kubectl cluster-info
+        kubectl get nodes
+
+    - name: Update image tags in Helm values
+      run: |
+        sed -i "s/imageTag: latest/imageTag: $IMAGE_TAG/g" microservices-helm-chart/values.yaml
+        sed -i "s/imageRegistry: matthewntsiful/imageRegistry: ghcr.io\/${{ github.repository_owner }}/g" microservices-helm-chart/values.yaml
+
+    - name: Deploy with Helm
+      run: |
+        helm upgrade --install microservices ./microservices-helm-chart \
+          --namespace microservices \
+          --create-namespace \
+          --wait \
+          --timeout 10m \
+          --set global.imageTag=$IMAGE_TAG \
+          --set global.imageRegistry=ghcr.io/${{ github.repository_owner }}
+
+    - name: Verify deployment
+      run: |
+        kubectl get pods -n microservices
+        kubectl get svc -n microservices
+        kubectl get ingress -n microservices
+
+    - name: Run smoke tests
+      run: |
+        # Wait for pods to be ready
+        kubectl wait --for=condition=ready pod -l app=frontend -n microservices --timeout=300s
+        
+        # Get ingress URL
+        INGRESS_URL=$(kubectl get ingress microservices-ingress -n microservices -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        
+        if [ ! -z "$INGRESS_URL" ]; then
+          echo "Testing application at: http://$INGRESS_URL"
+          # Wait for ALB to be ready
+          sleep 60
+          curl -f http://$INGRESS_URL || echo "Application not yet ready"
+        else
+          echo "Ingress URL not available yet"
+        fi
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy-to-eks
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Install kubectl and Helm
+      run: |
+        curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl"
+        chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
+    - name: Rollback deployment
+      run: |
+        helm rollback microservices -n microservices
+        kubectl rollout status deployment -n microservices --timeout=300s
+
+  notify:
+    name: Notify Teams
+    runs-on: ubuntu-latest
+    needs: [build-and-scan, deploy-to-eks]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: needs.deploy-to-eks.result == 'success'
+      run: |
+        echo "✅ Deployment successful to EKS cluster: $EKS_CLUSTER_NAME"
+        echo "🚀 Image tag: $IMAGE_TAG"
+        echo "🔗 Commit: ${{ github.sha }}"
+
+    - name: Notify on failure
+      if: needs.deploy-to-eks.result == 'failure' || needs.build-and-scan.result == 'failure'
+      run: |
+        echo "❌ Deployment failed for commit: ${{ github.sha }}"
+        echo "🔍 Check logs and security scan results"
+        exit 1
