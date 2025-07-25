@@ -64,6 +64,32 @@ This deployment is based on the excellent [Google Cloud Microservices Demo](http
 | **Redis Cart** | Redis | 6379 | Session and cart storage |
 | **Load Generator** | Python | - | Traffic simulation |
 
+## 🔄 CI/CD Pipeline
+
+### Pipeline Workflow
+```mermaid
+graph LR
+    A[Push to main] --> B[Build Images]
+    B --> C[Security Scan]
+    C --> D[Push to GHCR]
+    D --> E[Deploy to EKS]
+    E --> F[Smoke Tests]
+    F --> G[Success]
+    E --> H[Rollback on Failure]
+```
+
+### Security Integration
+- **Trivy Scanning** - Vulnerability detection for all images
+- **SARIF Upload** - Security results in GitHub Security tab
+- **Dependency Scanning** - Automated security monitoring
+- **Container Signing** - Image integrity verification
+
+### Deployment Features
+- **Zero-Downtime** - Rolling updates with health checks
+- **Auto-Rollback** - Automatic rollback on deployment failure
+- **Multi-Environment** - Support for staging and production
+- **GitOps Ready** - Infrastructure as Code with Helm
+
 ## 📚 Documentation
 
 - **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete step-by-step deployment instructions
@@ -98,22 +124,29 @@ kubectl get pods -n kube-system | grep metrics-server
 ### Automated CI/CD Pipeline
 
 **Prerequisites:**
-- Kind cluster running locally
-- GitHub self-hosted runner configured
+- AWS EKS cluster running
+- GitHub repository with proper secrets configured
 
-**Setup:**
-1. **Configure Self-Hosted Runner:**
-   ```bash
-   ./scripts/setup-github-runner.sh
-   cd ~/actions-runner
-   # Follow GitHub instructions to configure runner
-   ./run.sh
-   ```
+**Required GitHub Secrets:**
+```bash
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1
+EKS_CLUSTER_NAME=amazon-eks-cluster
+```
 
-2. **Automatic Deployment:**
-   - Push to `main` branch triggers the pipeline
-   - Pipeline builds images → pushes to GHCR → deploys to Kind
-   - Manual trigger via GitHub Actions UI
+**Pipeline Features:**
+- ✅ **Matrix Build** - Builds all 12 microservices in parallel
+- ✅ **Security Scanning** - Trivy vulnerability scanning with SARIF upload
+- ✅ **Container Registry** - Pushes to GitHub Container Registry (GHCR)
+- ✅ **EKS Deployment** - Automated Helm deployment to EKS
+- ✅ **Smoke Tests** - Post-deployment health checks
+- ✅ **Rollback** - Automatic rollback on deployment failure
+
+**Automatic Deployment:**
+- Push to `main` branch triggers the pipeline
+- Pipeline: Build → Scan → Push to GHCR → Deploy to EKS
+- Manual trigger via GitHub Actions UI
 
 ### Manual Deployment
 
@@ -199,19 +232,33 @@ kubectl port-forward -n microservices svc/frontend 8080:80
 
 **Container Registry:** GitHub Container Registry (GHCR)
 ```
-ghcr.io/matthewntsiful/microservices-k8s-deployment/microservices-<service-name>:latest
+ghcr.io/your-username/microservices-<service-name>:latest
+ghcr.io/your-username/microservices-<service-name>:<commit-sha>
 ```
 
+**Available Images (12 Services):**
+- `microservices-frontend`
+- `microservices-cartservice`
+- `microservices-productcatalogservice`
+- `microservices-currencyservice`
+- `microservices-paymentservice`
+- `microservices-shippingservice`
+- `microservices-emailservice`
+- `microservices-checkoutservice`
+- `microservices-recommendationservice`
+- `microservices-adservice`
+- `microservices-loadgenerator`
+- `microservices-shoppingassistantservice`
+
 **CI/CD Pipeline:**
-- **Build:** Builds all 10 microservice images
-- **Scan:** Security scans with Trivy
-- **Deploy:** Deploys to Kind cluster with rolling updates
+- **Build:** Matrix builds all 12 microservice images in parallel
+- **Scan:** Trivy security scanning with GitHub Security integration
+- **Deploy:** Automated Helm deployment to EKS with health checks
 
 **Manual Build:**
 ```bash
 # Build and push individual service
-docker build -t ghcr.io/username/repo/microservices-frontend:tag ./microservices-demo/src/frontend
-docker push ghcr.io/username/repo/microservices-frontend:tag
+./scripts/build-and-push.sh your-username latest
 ```
 
 ## 🔐 Security Features

@@ -156,43 +156,69 @@ microservices-helm-chart/
 
 ## 🔄 CI/CD Pipeline Setup
 
-### GitHub Actions Workflow
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy Microservices
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+### GitHub Secrets Configuration
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-        
-    - name: Build and push images
-      run: |
-        aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
-        ./scripts/build-and-push.sh
-        
-    - name: Deploy to EKS
-      run: |
-        aws eks update-kubeconfig --name microservices-cluster
-        helm upgrade --install microservices ./microservices-helm-chart \
-          --namespace microservices \
-          --create-namespace \
-          --values values-prod.yaml
+Before using the CI/CD pipeline, configure these secrets in your GitHub repository:
+
+**Repository Settings → Secrets and variables → Actions:**
+
+```bash
+# AWS Credentials
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+# AWS Configuration
+AWS_REGION=us-east-1
+EKS_CLUSTER_NAME=amazon-eks-cluster
 ```
+
+### Pipeline Permissions
+
+The workflow requires these permissions:
+- `contents: read` - Read repository code
+- `packages: write` - Push to GitHub Container Registry
+- `security-events: write` - Upload security scan results
+- `id-token: write` - OIDC authentication
+- `actions: read` - Workflow metadata access
+
+### Container Images
+
+Images are automatically pushed to:
+```
+ghcr.io/your-username/microservices-SERVICE:COMMIT_SHA
+ghcr.io/your-username/microservices-SERVICE:latest
+```
+
+### Production CI/CD Pipeline
+
+The repository includes a complete GitHub Actions workflow that:
+
+**Build Phase:**
+- Matrix builds all 12 microservices in parallel
+- Uses GitHub Container Registry (GHCR) for image storage
+- Handles special cases (cartservice Dockerfile location)
+
+**Security Phase:**
+- Trivy vulnerability scanning for all images
+- SARIF upload to GitHub Security tab
+- Continues deployment even with security findings
+
+**Deploy Phase:**
+- Automated deployment to EKS using Helm
+- Updates image tags dynamically
+- Waits for deployment completion
+- Runs smoke tests for health verification
+
+**Failure Handling:**
+- Automatic rollback on deployment failure
+- Notification system for team alerts
+- Comprehensive logging for debugging
+
+**Trigger Conditions:**
+- Push to `main` branch (full pipeline)
+- Push to `develop` branch (build and scan only)
+- Pull requests (build and scan only)
+- Manual workflow dispatch
 
 ### GitOps with ArgoCD
 ```yaml
