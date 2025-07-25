@@ -55,7 +55,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        cd microservices-demo/src/${{ matrix.service }}
+        if [ "${{ matrix.service }}" = "cartservice" ]; then
+          cd microservices-demo/src/cartservice/src
+        else
+          cd microservices-demo/src/${{ matrix.service }}
+        fi
         docker build -t $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:$IMAGE_TAG .
         docker tag $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:$IMAGE_TAG $GHCR_REGISTRY/${{ github.repository_owner }}/microservices-${{ matrix.service }}:latest
 
