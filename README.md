@@ -78,6 +78,15 @@ graph LR
     E --> H[Rollback on Failure]
 ```
 
+### Path-Based Triggers
+Pipeline runs only when relevant files change:
+- **Source Code**: `microservices-demo/src/**`
+- **Kubernetes Manifests**: `k8s-manifests/**`
+- **Helm Charts**: `microservices-helm-chart/**`
+- **Workflows**: `.github/workflows/**`
+- **Dockerfiles**: `Dockerfile*`
+- **Documentation**: `*.md` (push only)
+
 ### Security Integration
 - **Trivy Scanning** - Vulnerability detection for all images
 - **SARIF Upload** - Security results in GitHub Security tab
@@ -89,6 +98,7 @@ graph LR
 - **Auto-Rollback** - Automatic rollback on deployment failure
 - **Multi-Environment** - Support for staging and production
 - **GitOps Ready** - Infrastructure as Code with Helm
+- **Smart Triggers** - Path filtering to optimize CI/CD resources
 
 ## 📚 Documentation
 
@@ -132,7 +142,7 @@ kubectl get pods -n kube-system | grep metrics-server
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=us-east-1
-EKS_CLUSTER_NAME=amazon-eks-cluster
+EKS_CLUSTER_NAME=my-eks-cluster
 ```
 
 **Pipeline Features:**
@@ -142,6 +152,7 @@ EKS_CLUSTER_NAME=amazon-eks-cluster
 - ✅ **EKS Deployment** - Automated Helm deployment to EKS
 - ✅ **Smoke Tests** - Post-deployment health checks
 - ✅ **Rollback** - Automatic rollback on deployment failure
+- ✅ **Path Filtering** - Optimized triggers for relevant file changes
 
 **Automatic Deployment:**
 - Push to `main` branch triggers the pipeline

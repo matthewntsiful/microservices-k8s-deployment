@@ -3,8 +3,21 @@ name: CI/CD Pipeline - Build, Scan & Deploy to EKS
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'microservices-demo/src/**'
+      - 'k8s-manifests/**'
+      - 'microservices-helm-chart/**'
+      - '.github/workflows/**'
+      - 'Dockerfile*'
+      - '*.md'
   pull_request:
     branches: [main]
+    paths:
+      - 'microservices-demo/src/**'
+      - 'k8s-manifests/**'
+      - 'microservices-helm-chart/**'
+      - '.github/workflows/**'
+      - 'Dockerfile*'
   workflow_dispatch:
 
 permissions:
