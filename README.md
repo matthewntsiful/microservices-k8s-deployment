@@ -99,50 +99,9 @@ This deployment is based on the excellent [Google Cloud Microservices Demo](http
 | **Redis Cart** | Redis | 6379 | Session and cart storage |
 | **Load Generator** | Python | - | Traffic simulation |
 
-## 🔄 CI/CD Pipeline
+## 🚀 Getting Started
 
-### Pipeline Workflow
-```mermaid
-graph LR
-    A[Push to main] --> B[Build Images]
-    B --> C[Security Scan]
-    C --> D[Push to GHCR]
-    D --> E[Deploy to EKS]
-    E --> F[Smoke Tests]
-    F --> G[Success]
-    E --> H[Rollback on Failure]
-```
-
-### Path-Based Triggers
-Pipeline runs only when relevant files change:
-- **Source Code**: `microservices-demo/src/**`
-- **Kubernetes Manifests**: `k8s-manifests/**`
-- **Helm Charts**: `microservices-helm-chart/**`
-- **Workflows**: `.github/workflows/**`
-- **Dockerfiles**: `Dockerfile*`
-- **Documentation**: `*.md` (push only)
-
-### Security Integration
-- **Trivy Scanning** - Vulnerability detection for all images
-- **SARIF Upload** - Security results in GitHub Security tab
-- **Dependency Scanning** - Automated security monitoring
-- **Container Signing** - Image integrity verification
-
-### Deployment Features
-- **Zero-Downtime** - Rolling updates with health checks
-- **Auto-Rollback** - Automatic rollback on deployment failure
-- **Multi-Environment** - Support for staging and production
-- **GitOps Ready** - Infrastructure as Code with Helm
-- **Smart Triggers** - Path filtering to optimize CI/CD resources
-
-## 📚 Documentation
-
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete step-by-step deployment instructions
-- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Architecture Guide](ARCHITECTURE.md)** - Detailed technical architecture and service interconnections
-- **[Autoscaling Guide](AUTOSCALING.md)** - HPA implementation and monitoring
-
-## 📋 Prerequisites
+### Prerequisites
 
 - **Kubernetes Cluster** (v1.20+)
 - **kubectl** configured and connected
@@ -163,6 +122,13 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 kubectl get pods -n ingress-nginx
 kubectl get pods -n kube-system | grep metrics-server
 ```
+
+## 📚 Documentation
+
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Complete step-by-step deployment instructions
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Architecture Guide](ARCHITECTURE.md)** - Detailed technical architecture and service interconnections
+- **[Autoscaling Guide](AUTOSCALING.md)** - HPA implementation and monitoring
 
 ## 🛠️ Deployment Instructions
 
