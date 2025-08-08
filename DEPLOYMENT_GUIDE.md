@@ -193,21 +193,119 @@ module "eks" {
 }
 ```
 
+## 🛠️ Helm Chart Deployment
+
 ### Helm Chart Structure
+
 ```
 microservices-helm-chart/
-├── Chart.yaml              # Chart metadata
-├── values.yaml             # Default configuration
-├── values-prod.yaml        # Production overrides
-├── values-staging.yaml     # Staging overrides
-└── templates/
+├── Chart.yaml              # Chart metadata and version information
+├── values.yaml             # Default configuration for all environments
+├── values-dev.yaml         # Development environment overrides
+├── values-staging.yaml     # Staging environment overrides
+├── values-prod.yaml        # Production environment overrides
+├── charts/                 # Chart dependencies
+└── templates/              # Kubernetes manifest templates
+    ├── _helpers.tpl        # Template helpers
     ├── configmap.yaml      # Application configuration
-    ├── secrets.yaml        # Sensitive data
+    ├── secret.yaml         # Sensitive data
     ├── deployments/        # Service deployments
+    │   ├── frontend.yaml
+    │   ├── cartservice.yaml
+    │   └── ...
     ├── services/           # Service definitions
-    ├── ingress.yaml        # Traffic routing
-    └── hpa.yaml            # Autoscaling policies
+    │   ├── frontend.yaml
+    │   └── ...
+    ├── ingress.yaml        # Traffic routing rules
+    └── hpa.yaml            # Horizontal Pod Autoscaler configurations
 ```
+
+### Key Configuration Files
+
+1. **Chart.yaml**
+   - Defines the chart metadata including name, version, and dependencies
+   - Example:
+     ```yaml
+     apiVersion: v2
+     name: microservices
+     description: A Helm chart for microservices deployment
+     type: application
+     version: 0.1.0
+     appVersion: "1.0.0"
+     ```
+
+2. **values.yaml**
+   - Contains default configuration values
+   - Environment-specific overrides in values-{env}.yaml files
+   - Common configurations:
+     - Replica counts
+     - Resource limits/requests
+     - Environment variables
+     - Service types and ports
+
+### Deployment Commands
+
+#### Install/Upgrade
+
+```bash
+# For development
+helm upgrade --install microservices ./microservices-helm-chart \
+  --namespace microservices \
+  --create-namespace \
+  -f ./microservices-helm-chart/values-dev.yaml
+
+# For production
+helm upgrade --install microservices ./microservices-helm-chart \
+  --namespace production \
+  --create-namespace \
+  -f ./microservices-helm-chart/values-prod.yaml
+```
+
+#### Rollback
+
+```bash
+# View release history
+helm history microservices -n <namespace>
+
+# Rollback to previous version
+helm rollback microservices <revision> -n <namespace>
+```
+
+### CI/CD Integration
+
+The Helm chart is automatically deployed via the CI/CD pipeline. The pipeline:
+1. Lints the Helm chart
+2. Packages the chart
+3. Deploys to the target environment
+4. Verifies the deployment
+
+### Customizing Deployments
+
+You can override any value from the command line:
+
+```bash
+helm upgrade --install microservices ./microservices-helm-chart \
+  --namespace microservices \
+  --set frontend.replicaCount=3 \
+  --set frontend.resources.requests.cpu=500m
+```
+
+### Best Practices
+
+1. **Version Control**
+   - Always version your Helm charts
+   - Use semantic versioning (SemVer)
+   - Store chart packages in a Helm repository
+
+2. **Security**
+   - Use secrets for sensitive data
+   - Set resource limits and requests
+   - Enable network policies
+
+3. **Maintenance**
+   - Regularly update dependencies
+   - Document all custom values
+   - Test upgrades in staging first
 
 ## 🔄 CI/CD Pipeline Setup
 

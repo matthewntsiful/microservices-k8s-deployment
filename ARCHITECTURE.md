@@ -9,6 +9,30 @@ This document provides a detailed technical analysis of the microservices archit
 ![Microservices Architecture Diagram](./screenshots/architecture-diagram.png)
 *Figure 1: High-level overview of the microservices architecture*
 
+## Helm Chart Architecture
+
+### Overview
+The application is packaged and deployed using Helm, a Kubernetes package manager that simplifies application deployment and management.
+
+### Chart Structure
+- `Chart.yaml`: Metadata about the chart
+- `values.yaml`: Default configuration values for all services
+- `templates/`: Contains all Kubernetes manifests
+- `charts/`: Directory for chart dependencies
+
+### Key Features
+- **Environment-specific Configuration**: Different values files for dev/staging/prod
+- **Service Templating**: Common templates for similar services
+- **Dependency Management**: Handles all microservice dependencies
+- **Easy Updates**: Single-command upgrades and rollbacks
+
+### Deployment
+Deployment is handled through the CI/CD pipeline using the `deploy-helm.sh` script, which:
+1. Lints the Helm chart
+2. Packages the chart
+3. Deploys to the target environment
+4. Verifies the deployment
+
 ## CI/CD Pipeline
 
 ```mermaid
