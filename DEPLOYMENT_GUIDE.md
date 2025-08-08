@@ -1,16 +1,71 @@
-# DevOps Deployment Guide - Microservices on EKS
+# 🚀 Microservices Deployment Guide
 
 ## 📋 Table of Contents
-- [Infrastructure Prerequisites](#infrastructure-prerequisites)
-- [DevOps Architecture](#devops-architecture)
-- [Infrastructure as Code](#infrastructure-as-code)
-- [CI/CD Pipeline Setup](#cicd-pipeline-setup)
-- [Automated Deployment](#automated-deployment)
-- [Monitoring & Observability](#monitoring--observability)
-- [Production Operations](#production-operations)
-- [Disaster Recovery](#disaster-recovery)
+
+- [Infrastructure Prerequisites](#-infrastructure-prerequisites)
+- [Quick Start](#-quick-start)
+- [Detailed Deployment](#-detailed-deployment)
+- [Configuration](#-configuration)
+- [Verification](#-verification)
+- [Troubleshooting](#-troubleshooting)
+- [Maintenance](#-maintenance)
 
 ## 🛠️ Infrastructure Prerequisites
+
+### System Requirements
+
+- **Kubernetes Cluster**: AWS EKS (v1.20+)
+- **Container Runtime**: Docker (v20.10+) or containerd
+- **CLI Tools**:
+  - `kubectl` (v1.20+)
+  - `aws` CLI (v2.0+)
+  - `terraform` (v1.0+)
+  - `helm` (v3.0+)
+
+### AWS Account Setup
+
+1. **IAM Permissions**: Ensure your IAM user has:
+   - Administrator access to EKS
+   - EC2, VPC, and IAM permissions
+   - ECR access for container registry
+
+2. **Networking**:
+   - VPC with public/private subnets
+   - NAT Gateway for private subnets
+   - Route53 hosted zone (optional)
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/microservices-k8s-deployment.git
+   cd microservices-k8s-deployment
+   ```
+
+2. Configure AWS credentials:
+   ```bash
+   aws configure
+   ```
+
+3. Initialize Terraform:
+   ```bash
+   cd terraform
+   terraform init
+   ```
+
+4. Deploy infrastructure:
+   ```bash
+   terraform apply
+   ```
+
+5. Deploy applications:
+   ```bash
+   kubectl apply -f kubernetes/
+   ```
+
+For detailed deployment instructions, see the [Detailed Deployment](#-detailed-deployment) section.
 
 ### DevOps Toolchain
 ```bash

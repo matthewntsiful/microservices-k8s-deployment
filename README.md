@@ -6,12 +6,47 @@
 [![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)](https://helm.sh/)
 [![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)](https://prometheus.io/)
 [![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)](https://grafana.com/)
-
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
-![Infrastructure](https://img.shields.io/badge/Infrastructure-Production%20Ready-green.svg)
-![DevOps](https://img.shields.io/badge/DevOps-CI%2FCD%20Enabled-blue.svg)
 
-**Enterprise-grade DevOps platform** demonstrating production-ready microservices deployment on AWS EKS with complete CI/CD pipeline, Infrastructure as Code, monitoring, and operational best practices.
+## 📖 Documentation Overview
+
+This repository contains a production-ready microservices platform deployed on AWS EKS. The documentation is organized as follows:
+
+- [Architecture](ARCHITECTURE.md) - Detailed system architecture and design decisions
+- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Step-by-step deployment instructions
+- [Testing Guide](TESTING.md) - Testing strategies and procedures
+- [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
+- [Autoscaling](AUTOSCALING.md) - Scaling strategies and configurations
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- AWS Account with appropriate IAM permissions
+- `kubectl` v1.20+ and `aws` CLI configured
+- Terraform v1.0+ and Helm v3.0+
+- Docker and Git
+
+### Deploy to EKS
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/microservices-k8s-deployment.git
+cd microservices-k8s-deployment
+
+# Initialize Terraform
+terraform init
+
+# Deploy infrastructure
+terraform apply
+
+# Deploy applications
+helm install my-release ./helm-chart
+```
+
+## 🏗️ Architecture Overview
+
+This platform demonstrates **enterprise DevOps practices** for microservices deployment, featuring:
 
 ![Frontend](screenshots/frontend.png)
 

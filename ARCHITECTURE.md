@@ -6,46 +6,101 @@ This document provides a detailed technical analysis of the microservices archit
 
 ## Architecture Diagram
 
+![Microservices Architecture Diagram](./screenshots/architecture-diagram.png)
+*Figure 1: High-level overview of the microservices architecture*
+
+## CI/CD Pipeline
+
+```mermaid
+graph TD
+    %% Triggers
+    A[Code Push/PR] -->|Triggers| B[GitHub Actions]
+    C[Manual Trigger] -->|via| B
+    D[Scheduled] -->|Nightly| B
+    
+    %% Build Stage
+    B --> E[Build & Test]
+    E -->|Matrix Strategy| E1[Build Frontend]
+    E -->|Parallel| E2[Build Backend Services]
+    E --> E3[Run Unit Tests]
+    
+    %% Scan Stage
+    E --> F[Security Scan]
+    F --> F1[Trivy Vulnerability Scan]
+    F --> F2[Dependency Check]
+    F --> F3[SBOM Generation]
+    
+    %% Deploy Stages
+    F --> G{Environment}
+    G -->|develop| H[Dev EKS Cluster]
+    G -->|staging| I[Staging EKS Cluster]
+    G -->|main| J[Production EKS Cluster]
+    
+    %% Deployment Steps
+    H --> K[Deploy with Helm]
+    I --> K
+    J --> K
+    K --> L[Run Integration Tests]
+    L --> M[Smoke Tests]
+    M --> N[Performance Tests]
+    
+    %% Notifications
+    N --> O[Slack/Email Notifications]
+    
+    %% Styling
+    classDef trigger fill:#f9f,stroke:#333,stroke-width:2px
+    classDef build fill:#9f9,stroke:#333,stroke-width:2px
+    classDef scan fill:#ff9,stroke:#333,stroke-width:2px
+    classDef deploy fill:#99f,stroke:#333,stroke-width:2px
+    classDef test fill:#f99,stroke:#333,stroke-width:2px
+    classDef notify fill:#9ff,stroke:#333,stroke-width:2px
+    
+    class A,C,D trigger
+    class E,E1,E2,E3 build
+    class F,F1,F2,F3 scan
+    class G,H,I,J,K deploy
+    class L,M,N test
+    class O notify
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Load Balancer │────│  NGINX Ingress   │────│    Frontend     │
-│   (External)    │    │   Controller     │    │   (Go:8080)     │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                                        │
-                       ┌────────────────────────────────┼────────────────────────────────┐
-                       │                                │                                │
-                       ▼                                ▼                                ▼
-            ┌─────────────────┐              ┌─────────────────┐              ┌─────────────────┐
-            │  Product Catalog│              │   Cart Service  │              │ Recommendation │
-            │   (Go:3550)     │              │   (C#:7070)     │              │  (Python:8080)  │
-            └─────────────────┘              └─────────────────┘              └─────────────────┘
-                       │                                │                                │
-                       │                                ▼                                │
-                       │                     ┌─────────────────┐                       │
-                       │                     │   Redis Cache   │                       │
-                       │                     │   (Redis:6379)  │                       │
-                       │                     └─────────────────┘                       │
-                       │                                                                │
-            ┌──────────┼────────────────────────────────────────────────────────────────┼──────────┐
-            │          │                                                                │          │
-            ▼          ▼                                                                ▼          ▼
-┌─────────────────┐ ┌─────────────────┐                                    ┌─────────────────┐ ┌─────────────────┐
-│ Currency Service│ │ Checkout Service│                                    │   Ad Service    │ │ Shipping Service│
-│ (Node.js:7000)  │ │   (Go:5050)     │                                    │  (Java:9555)    │ │  (Go:50051)     │
-└─────────────────┘ └─────────────────┘                                    └─────────────────┘ └─────────────────┘
-                             │                                                                           │
-                             ▼                                                                           │
-                    ┌─────────────────┐                                                                │
-                    │ Payment Service │                                                                │
-                    │ (Node.js:50051) │                                                                │
-                    └─────────────────┘                                                                │
-                             │                                                                           │
-                             ▼                                                                           │
-                    ┌─────────────────┐                                                                │
-                    │  Email Service  │◄───────────────────────────────────────────────────────────────┘
-                    │ (Python:5000)   │
-                    └─────────────────┘
-```
+
+*Figure 2: CI/CD Pipeline Overview*
+
+### Pipeline Stages
+
+1. **Trigger**
+   - Code push to `main`/`develop` branches
+   - Pull Request creation/update
+   - Manual workflow dispatch
+   - Scheduled nightly builds
+
+2. **Build & Test**
+   - Matrix build for all microservices
+   - Parallel build execution
+   - Unit test execution
+   - Code coverage reporting
+
+3. **Security Scan**
+   - Container vulnerability scanning with Trivy
+   - Dependency vulnerability checks
+   - Software Bill of Materials (SBOM) generation
+   - GitHub Security integration
+
+4. **Deploy**
+   - Environment-specific deployments
+   - Helm chart templating
+   - Kubernetes manifest validation
+   - Blue/Green or Canary deployments (production)
+
+5. **Test**
+   - Integration tests
+   - Smoke tests
+   - Performance/load testing
+   - Contract testing
+
+6. **Notify**
+   - Build status notifications
+   - Security alerts
+   - Deployment status
 
 ## Service Communication Matrix
 
@@ -99,7 +154,7 @@ User → Frontend → Checkout Service
                  Clear Cart (Cart Service → Redis)
 ```
 
-## Service Specifications
+## Services
 
 ### Frontend Service (Go)
 - **Port**: 8080
@@ -285,6 +340,50 @@ spec:
 - **Resource Metrics**: CPU, memory, network usage
 - **Application Metrics**: Request rates, error rates, latency
 - **Business Metrics**: Order completion, cart abandonment
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment. The pipeline is triggered on pushes to `main` and `develop` branches, as well as on pull requests to the `main` branch.
+
+### Pipeline Workflow
+
+1. **Trigger Events**:
+
+   - Push to `main` or `develop` branches
+   - Pull requests to `main` branch
+   - Manual trigger via `workflow_dispatch`
+
+2. **Build & Scan Job**:
+   - Builds Docker images for all microservices
+   - Performs security scanning using Trivy
+   - Uploads scan results to GitHub Security tab
+   - Pushes images to GitHub Container Registry (GHCR)
+   - Services built:
+     - Frontend
+     - Cart Service
+     - Product Catalog Service
+     - Currency Service
+     - Payment Service
+     - Shipping Service
+     - Email Service
+     - Checkout Service
+     - Recommendation Service
+     - Ad Service
+     - Load Generator
+     - Shopping Assistant Service
+
+3. **Deployment to EKS**:
+
+   - Deploys to EKS cluster (only on `main` branch)
+   - Uses Kubernetes manifests for deployment
+   - Implements rolling updates for zero-downtime deployments
+
+### Security Features
+
+- Container vulnerability scanning with Trivy
+- GitHub CodeQL integration
+- Automated security alerts for vulnerabilities
+- Required status checks for protected branches
 
 ## Deployment Patterns
 
